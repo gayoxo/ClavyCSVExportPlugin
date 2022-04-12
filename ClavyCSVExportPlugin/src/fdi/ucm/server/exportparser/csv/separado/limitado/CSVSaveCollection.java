@@ -147,6 +147,9 @@ public class CSVSaveCollection extends SaveCollection {
 				    catch(IOException ioe) {
 				      ioe.printStackTrace();
 				    }
+					catch(NullPointerException ioe) {
+				      ioe.printStackTrace();
+				    }
 			}
 
 			
@@ -186,7 +189,29 @@ public class CSVSaveCollection extends SaveCollection {
 		
 		if (grama2Elem2Visual.isEmpty())
 			for(CompleteGrammar CG:salvar.getMetamodelGrammar())
-				grama2Elem2Visual.put(CG.getNombre().trim().toLowerCase(), new HashMap<String, Label4count>());
+				{
+				HashMap<String, Label4count> TablaLabel = new HashMap<String, Label4count>();
+				
+				List<CompleteElementType> Salida=new LinkedList<>();
+				Salida.addAll(generalistaS(CG.getSons()));
+				
+				for (CompleteElementType completeElementType : Salida) {
+					if (completeElementType instanceof CompleteTextElementType)
+						TablaLabel.put(completeElementType.getName().trim().toLowerCase(),
+								new Label4count(completeElementType.getName().trim().toLowerCase(), false));
+					else
+						TablaLabel.put(completeElementType.getName().trim().toLowerCase(),
+								new Label4count(completeElementType.getName().trim().toLowerCase(), true));
+				}
+				
+				
+				
+				grama2Elem2Visual.put(CG.getNombre().trim().toLowerCase(), TablaLabel);
+				
+				
+				
+				
+				}
 			
 		
 		
@@ -207,6 +232,9 @@ public class CSVSaveCollection extends SaveCollection {
 
 			List<String> buscar=new LinkedList<String>(Element2LabelHash.keySet());
 			
+			Cabecera.append("clavy_id");
+			Cabecera.append(delimiter);
+			
 			for (int i = 0; i < buscar.size(); i++) 
 				{
 				Cabecera.append(Element2LabelHash.get(buscar.get(i)).getLabel());
@@ -218,9 +246,8 @@ public class CSVSaveCollection extends SaveCollection {
 				CompleteDocuments completeElementType = salvar.getEstructuras().get(i);
 				HashMap<String, List<String>> Elem2Values=new HashMap<String, List<String>>();
 				for (CompleteElement Elemento : completeElementType.getDescription()) {
-					if (gramm(Elemento.getHastype()).toLowerCase()==Grammarname)
-						if (Element2LabelHash.isEmpty()||
-								Element2LabelHash.get(Elemento.getHastype().getName().trim().toLowerCase())!=null)
+					if (gramm(Elemento.getHastype()).toLowerCase().equals(Grammarname))
+						if (Element2LabelHash.get(Elemento.getHastype().getName().trim().toLowerCase())!=null)
 					{
 							List<String> Values=Elem2Values.get(Elemento.getHastype().getName().trim().toLowerCase());
 							if (Values==null)
@@ -234,20 +261,25 @@ public class CSVSaveCollection extends SaveCollection {
 				}
 				
 				
-				for (int j = 0; i < buscar.size(); j++) 
+				if (!Elem2Values.isEmpty()) {
+					
+					Datos.append(completeElementType.getClavilenoid());	
+					Datos.append(delimiter);
+					
+				for (int j = 0; j < buscar.size(); j++) 
 				{
 					
 					
 					List<String> valores = Elem2Values.get(buscar.get(j));
 					
-					if (!valores.isEmpty())
+					if (valores!=null&&!valores.isEmpty())
 					{
 						
-						if (Element2LabelHash.get(buscar.get(i)).isCount())
+						if (Element2LabelHash.get(buscar.get(j)).isCount())
 							Datos.append(valores.size());
 						else
 							if (valores.size()==1)
-								Datos.append(valores.get(i));
+								Datos.append(valores.get(0));
 							else
 								Datos.append(Arrays.toString(valores.toArray()));
 
@@ -259,7 +291,8 @@ public class CSVSaveCollection extends SaveCollection {
 					Datos.append(delimiter);
 				}
 			
-				
+				Datos.append('\n');
+				}
 			}
 			
 			
@@ -295,10 +328,12 @@ public class CSVSaveCollection extends SaveCollection {
 				}
 		}
 		
+		List<String> fileList=new LinkedList<String>();
+		generateFileList(new File(sOURCE_FOLDER_CSV), fileList, sOURCE_FOLDER_CSV);
 		
 		String sOURCE_FOLDERSalida = sOURCE_FOLDER2+File.separatorChar+System.currentTimeMillis()+"_CSV_"+salvar.getClavilenoid()+".zip";
 		
-		
+		zipIt(sOURCE_FOLDERSalida, fileList, sOURCE_FOLDER_CSV);
 		
 	        System.out.println("done!");
 	
@@ -325,7 +360,7 @@ public class CSVSaveCollection extends SaveCollection {
 	
 	private String generateZipEntry(String file,
 			 String SOURCE_FOLDERP) {
-        return file.substring(SOURCE_FOLDERP.length() + 1, file.length());
+        return file.substring(new Long((new File(SOURCE_FOLDERP)).toString().length()).intValue() + 1, file.length());
     }
 	
 	
@@ -350,7 +385,7 @@ public class CSVSaveCollection extends SaveCollection {
 	                ZipEntry ze = new ZipEntry(source + File.separator + file);
 	                zos.putNextEntry(ze);
 	                try {
-	                    in = new FileInputStream(SOURCE_FOLDER + File.separator + file);
+	                    in = new FileInputStream(SOURCE_FOLDERP + File.separator + file);
 	                    int len;
 	                    while ((len = in .read(buffer)) > 0) {
 	                        zos.write(buffer, 0, len);
