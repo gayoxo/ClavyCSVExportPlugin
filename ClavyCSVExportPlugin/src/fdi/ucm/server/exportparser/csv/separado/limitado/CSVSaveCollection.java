@@ -261,10 +261,30 @@ public class CSVSaveCollection extends SaveCollection {
 				}
 				
 				
+				
+				
+				
 				if (!Elem2Values.isEmpty()) {
 					
 					Datos.append(completeElementType.getClavilenoid());	
 					Datos.append(delimiter);
+					
+					
+					if (Element2LabelHash.get("des")!=null)
+					{
+						List<String> Values=Elem2Values.get("des");
+						if (Values==null)
+							Values=new LinkedList<String>();
+
+						
+							Values.add(completeElementType.getDescriptionText());
+
+						Elem2Values.put("des", Values);
+					}
+					
+					
+					
+					
 					
 				for (int j = 0; j < buscar.size(); j++) 
 				{
@@ -275,17 +295,24 @@ public class CSVSaveCollection extends SaveCollection {
 					if (valores!=null&&!valores.isEmpty())
 					{
 						
+						String ValorMete="";
 						if (Element2LabelHash.get(buscar.get(j)).isCount())
-							Datos.append(valores.size());
+							ValorMete=Integer.toString(valores.size());
 						else
 							if (valores.size()==1)
-								Datos.append(valores.get(0));
+								ValorMete=valores.get(0);
 							else
-								Datos.append(Arrays.toString(valores.toArray()));
+								ValorMete=Arrays.toString(valores.toArray());
 
+						ValorMete=ValorMete.replace("\n", "").replace("\r", "").trim();
+						Datos.append(ValorMete);
 					}
+					else
+						if (Element2LabelHash.get(buscar.get(j)).isCount())
+							Datos.append(0);
 					
 	
+					
 					
 				if ((j+1) < buscar.size())
 					Datos.append(delimiter);
