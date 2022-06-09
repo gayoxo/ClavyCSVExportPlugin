@@ -7,7 +7,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
@@ -18,14 +17,8 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map.Entry;
-import java.util.zip.ZipEntry;
-import java.util.zip.ZipOutputStream;
 
-import fdi.ucm.server.modelComplete.ImportExportPair;
-import fdi.ucm.server.exportparser.csv.StaticFunctionsCSV;
 import fdi.ucm.server.modelComplete.CompleteImportRuntimeException;
-import fdi.ucm.server.modelComplete.ImportExportDataEnum;
-import fdi.ucm.server.modelComplete.SaveCollection;
 import fdi.ucm.server.modelComplete.collection.CompleteCollection;
 import fdi.ucm.server.modelComplete.collection.CompleteLogAndUpdates;
 import fdi.ucm.server.modelComplete.collection.document.CompleteDocuments;
@@ -40,50 +33,15 @@ import fdi.ucm.server.modelComplete.collection.grammar.CompleteTextElementType;
  * @author Joaquin Gayoso-Cabada
  *
  */
-public class CSVSaveCollection extends SaveCollection {
+public class CSVSaveCollectionMnemosine_coma extends CSVSaveCollection {
 
-	protected static final String CSV = "CSV file";
-	public static final String delimiter = ";";
-	protected ArrayList<ImportExportPair> Parametros;
-	protected String Path;
-	protected String FileIO;
-	protected String SOURCE_FOLDER = ""; // SourceFolder path
-	protected ArrayList<String> DateEntrada;
 	
+	public static final String delimiterin = ";";
+	public static final String delimiter = ",";
+	public static final String quote = "\"";
 
-	public class Label4count{
-		
-		private String Label;
-		private boolean count;
-		
-		@SuppressWarnings("unused")
-		private Label4count() {
-		}
-
-		public Label4count(String label, boolean count) {
-			super();
-			Label = label;
-			this.count = count;
-		}
-		
-		public String getLabel() {
-			return Label;
-		}
-		
-		public boolean isCount() {
-			return count;
-		}
-		
-		
-	}
 	
 	
-	/**
-	 * Constructor por defecto
-	 */
-		public CSVSaveCollection() {
-	}
-
 	/* (non-Javadoc)
 	 * @see fdi.ucm.server.SaveCollection#processCollecccion(fdi.ucm.shared.model.collection.Collection)
 	 */
@@ -105,7 +63,7 @@ public class CSVSaveCollection extends SaveCollection {
 				      String line = " ";
 				      String[] tempArr;
 				      while ((line = br.readLine()) != null) {
-				        tempArr = line.split(delimiter);
+				        tempArr = line.split(delimiterin);
 				        if (tempArr.length>1)
 				        {
 				        	String Grammar = tempArr[0].trim().toLowerCase();
@@ -168,7 +126,9 @@ public class CSVSaveCollection extends SaveCollection {
 		}
 		
 	}
-
+	
+	
+	@Override
 	protected String ProcessCollectionCSV(CompleteCollection salvar, String sOURCE_FOLDER2,
 			CompleteLogAndUpdates cL, HashMap<String, HashMap<String, Label4count>> grama2Elem2Visual) {
 		
@@ -229,7 +189,8 @@ public class CSVSaveCollection extends SaveCollection {
 			
 			for (int i = 0; i < buscar.size(); i++) 
 				{
-				Cabecera.append(Element2LabelHash.get(buscar.get(i)).getLabel());
+				String ValueCAb=Element2LabelHash.get(buscar.get(i)).getLabel();
+				Cabecera.append(double_quote(ValueCAb));
 				if ((i+1) < buscar.size())
 					Cabecera.append(delimiter);
 				}
@@ -297,7 +258,8 @@ public class CSVSaveCollection extends SaveCollection {
 								ValorMete=Arrays.toString(valores.toArray());
 
 						ValorMete=ValorMete.replace("\n", "").replace("\r", "").trim();
-						Datos.append(ValorMete);
+						
+						Datos.append(double_quote(ValorMete));
 					}
 					else
 						if (Element2LabelHash.get(buscar.get(j)).isCount())
@@ -360,164 +322,14 @@ public class CSVSaveCollection extends SaveCollection {
 		
 		return sOURCE_FOLDERSalida;
 	}
-	
-	
-	public void generateFileList(File node,List<String> fileList,
-			 String SOURCE_FOLDERP) {
-        // add file only
-        if (node.isFile()) {
-            fileList.add(generateZipEntry(node.toString(),SOURCE_FOLDERP));
-        }
-
-        if (node.isDirectory()) {
-            String[] subNote = node.list();
-            for (String filename: subNote) {
-                generateFileList(new File(node, filename),fileList,SOURCE_FOLDERP);
-            }
-        }
-    }
-	
-	private String generateZipEntry(String file,
-			 String SOURCE_FOLDERP) {
-        return file.substring(new Long((new File(SOURCE_FOLDERP)).toString().length()).intValue() + 1, file.length());
-    }
-	
-	
-	
-	
-	 public void zipIt(String zipFile,
-			 List<String> fileList,
-			 String SOURCE_FOLDERP) {
-	        byte[] buffer = new byte[1024];
-	        String source = new File(SOURCE_FOLDERP).getName();
-	        FileOutputStream fos = null;
-	        ZipOutputStream zos = null;
-	        try {
-	            fos = new FileOutputStream(zipFile);
-	            zos = new ZipOutputStream(fos);
-
-	            System.out.println("Output to Zip : " + zipFile);
-	            FileInputStream in = null;
-
-	            for (String file: fileList) {
-	                System.out.println("File Added : " + file);
-	                ZipEntry ze = new ZipEntry(source + File.separator + file);
-	                zos.putNextEntry(ze);
-	                try {
-	                    in = new FileInputStream(SOURCE_FOLDERP + File.separator + file);
-	                    int len;
-	                    while ((len = in .read(buffer)) > 0) {
-	                        zos.write(buffer, 0, len);
-	                    }
-	                } finally {
-	                    in.close();
-	                }
-	            }
-
-	            zos.closeEntry();
-	            System.out.println("Folder successfully compressed");
-
-	        } catch (IOException ex) {
-	            ex.printStackTrace();
-	        } finally {
-	            try {
-	                zos.close();
-	            } catch (IOException e) {
-	                e.printStackTrace();
-	            }
-	        }
-	    }
-	
-	
-
-	protected String gramm(CompleteElementType hastype) {
-		if (hastype.getCollectionFather()!=null)
-			return hastype.getCollectionFather().getNombre();
-		else
-			if (hastype.getFather()==null)
-				return hastype.getName();
-			else
-				return gramm(hastype.getFather());
-	}
-
-	protected List<CompleteElementType> generalistaS(List<CompleteElementType> sons) {
-		List<CompleteElementType> Salida=new LinkedList<>();
-		for (CompleteElementType completeElementType : sons) {
-			if (completeElementType instanceof CompleteTextElementType
-					&&!StaticFunctionsCSV.IsIgnore(completeElementType.getShows()))
-				Salida.add(completeElementType);
-			if (!StaticFunctionsCSV.IsIgnore_Sons(completeElementType.getShows()))
-				Salida.addAll(generalistaS(completeElementType.getSons()));
-		}
-		
-		return Salida;
-	}
-
-	/**
-	 * QUitar caracteres especiales.
-	 * @param str texto de entrada.
-	 * @return texto sin caracteres especiales.
-	 */
-	public String RemoveSpecialCharacters(String str) {
-		   StringBuilder sb = new StringBuilder();
-		   for (int i = 0; i < str.length(); i++) {
-			   char c = str.charAt(i);
-			   if ((c >= '0' && c <= '9') || (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || c == '_') {
-			         sb.append(c);
-			      }
-		}
-		   return sb.toString();
-		}
-
-	
-
-
-	@Override
-	public ArrayList<ImportExportPair> getConfiguracion() {
-		if (Parametros==null)
-		{
-			ArrayList<ImportExportPair> ListaCampos=new ArrayList<ImportExportPair>();
-			ListaCampos.add(new ImportExportPair(ImportExportDataEnum.File, "FilteredFile"));
-			return ListaCampos;
-		}
-		else return Parametros;
-	}
-
-	@Override
-	public void setConfiguracion(ArrayList<String> dateEntrada) {
-		DateEntrada=dateEntrada;
-	}
-		
-
-
-	@Override
-	public String getName() {
-		return CSV;
-	}
-
-
-	@Override
-	public boolean isFileOutput() {
-		return true;
-	}
-
-	@Override
-	public String FileOutput() {
-		return FileIO;
-	}
-
-	@Override
-	public void SetlocalTemporalFolder(String TemporalPath) {
-		
-	}
-
-	
-
-	
-
-	
  
 	
+	private String double_quote(String valueCAb) {
+		valueCAb=valueCAb.replace("\"", "\"\"");
+		return quote+valueCAb+quote;
+	}
+
+
 	public static void main(String[] args) {
 		
 		String message="Exception .clavy-> Params Null ";
@@ -550,39 +362,16 @@ public class CSVSaveCollection extends SaveCollection {
 				// TODO: handle exception
 			}
 			 
-			 String fileNameJSON;
-				if (args.length>1)
-					fileNameJSON=args[1];
-				else
-					fileNameJSON = null;
-				
-				
-				
-				
-				
-			 
+			 String fileNameJSON="mnemosine.csv";
+
 			 
 			 String Folder = System.getProperty("user.home")+File.separator+System.nanoTime();
 		
 			 new File(Folder).mkdirs();
 			 
 			 
-//		 
-//			 List<Long> List = new ArrayList<>();
-//			 
-//			 //36297
-//			 if (args.length>1)
-//					 for (int i = 1; i < args.length; i++) {
-//						try {
-//							List.add(Long.parseLong(args[i]));
-//						} catch (Exception e) {
-//							// TODO: handle exception
-//						}
-//					}
-
-
 			 
-			CSVSaveCollection SP=new CSVSaveCollection();
+			CSVSaveCollectionMnemosine_coma SP=new CSVSaveCollectionMnemosine_coma();
 	
 			ArrayList<String> lisyta=new ArrayList<String>();
 			lisyta.add(fileNameJSON);
