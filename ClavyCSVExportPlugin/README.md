@@ -1,0 +1,1 @@
+## Revisar que carga bien el archivo de csv porque a verces se peta el UTF-8 y no pilla bien los campos.
